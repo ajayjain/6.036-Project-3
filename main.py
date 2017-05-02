@@ -4,6 +4,7 @@
 import glob
 import os
 import pickle
+from operator import itemgetter
 
 import project3 as p3
 import utils as utils
@@ -22,17 +23,28 @@ if not os.path.exists(MODELS_DIR):
 
 toy_data = pd.read_csv(os.path.join(PROJ_DIR, 'toy_data.csv')).as_matrix()
 
-for k in range(1, 6):
-    mu, cluster_assignments = p3.k_means(toy_data, k)
-    utils.plot_kmeans_clusters(toy_data, k, mu, cluster_assignments)
+# print('Part 1.1: k-means')
+
+# for k in range(1, 6):
+#     results = []
+#
+#     for iter in range(20):
+#         results.append(p3.k_means(toy_data, k))
+#
+#     cost, mu, cluster_assignments = min(results, key=itemgetter(0))
+#
+#     print(k, cost)
+#     utils.plot_kmeans_clusters(toy_data, k, mu, cluster_assignments)
 
 # -------------------------------------------------------------------------------
 # Part 1.2
 # -------------------------------------------------------------------------------
 
-# GMM_K_MIN_MAX = (1, 5)
-# utils.fit_k(p3.GMM, toy_data, *GMM_K_MIN_MAX,
-#             MODELS_DIR, verbose=False, d=toy_data.shape[1])
+print('Part 1.2: GMM')
+
+GMM_K_MIN_MAX = (1, 5)
+utils.fit_k(p3.GMM, toy_data, *GMM_K_MIN_MAX,
+            MODELS_DIR, verbose=False, d=toy_data.shape[1])
 
 # -------------------------------------------------------------------------------
 # Part 1.3

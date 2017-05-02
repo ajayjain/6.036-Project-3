@@ -20,7 +20,6 @@ def k_means(data, k, eps=1e-4, mu=None):
     if mu is None:
         # randomly choose k points as initial centroids
         mu = data[random.sample(range(data.shape[0]), k)]
-        print(mu)
     else:
         # if initial means provided, copy to new array so method does not mutate inputs
         mu = np.array(mu)
@@ -65,7 +64,7 @@ def k_means(data, k, eps=1e-4, mu=None):
         nearest_representative = np.argmin(representative_distances)
         cluster_assignments[i] = nearest_representative
 
-    return (mu, cluster_assignments)
+    return (cost_next, mu, cluster_assignments)
 
 
 
@@ -154,7 +153,36 @@ class GMM(MixtureModel):
         self.params['mu'] = np.random.randn(k, d)
 
     def e_step(self, data):
-        raise NotImplementedError()
+        """ Performs the E-step of the EM algorithm
+        data - an NxD pandas DataFrame
+
+        returns a tuple containing
+            (float) the expected log-likelihood
+            (NxK ndarray) the posterior probability of the latent variables
+        """
+
+        n, d = data.shape
+
+        # Compute N(x; mu, sig^2*I) for all data pt, class pairs
+        PDFs = np.zeros((n, self.k))
+        for j in range(self.k):
+            sigsq = self.params['sigsq'][j]
+            mu = self.params['mu'][j]
+
+            coeff = 1 / np.sqrt(2 * np.pi * sigsq)
+
+            # Compute |x^(i) - mu^(j)| for all i
+            mean_displacements = data - mu # n by d
+            mean_dists_sq = np.inner(mean_displacements, mean_displacements).diagonal() # 1 by n
+
+            PDFs[:, j] = coeff * np.exp(-mean_dists_sq / (2 * sigsq))
+
+        # Compute pi*N(x; mu, sig^2*I)
+        weighted_PDFs = self.params['pi'] * PDFs # n by k
+
+        # normalize class probabilites for each data point (so sum_j p(i, j) = 1 for all i)
+        p = weighted_PDFs / np.vstack([weighted_PDFs.sum(axis=1)]*self.k).T
+        return p
 
     def m_step(self, data, pz_x):
         raise NotImplementedError()
