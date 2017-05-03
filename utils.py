@@ -33,7 +33,7 @@ def fit_k(Model, data, k_min, k_max, snap_path, verbose, **model_opts):
         while True:
             print('Fitting k = %d' % k, end=': ', flush=True)
             model = Model(k, **model_opts)
-            if model.fit(data, verbose=False):
+            if model.fit(data, verbose=verbose):
                 break
             print('bad init; trying again...')
         model_type = Model.__name__.lower()

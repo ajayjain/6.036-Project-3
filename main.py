@@ -21,9 +21,9 @@ if not os.path.exists(MODELS_DIR):
 # Part 1.1
 # -------------------------------------------------------------------------------
 
-toy_data = pd.read_csv(os.path.join(PROJ_DIR, 'toy_data.csv')).as_matrix()
+# toy_data = pd.read_csv(os.path.join(PROJ_DIR, 'toy_data.csv')).as_matrix()
 
-# print('Part 1.1: k-means')
+# print('\nPart 1.1: k-means')
 
 # for k in range(1, 6):
 #     results = []
@@ -40,22 +40,24 @@ toy_data = pd.read_csv(os.path.join(PROJ_DIR, 'toy_data.csv')).as_matrix()
 # Part 1.2
 # -------------------------------------------------------------------------------
 
-print('Part 1.2: GMM')
-
-GMM_K_MIN_MAX = (1, 5)
-utils.fit_k(p3.GMM, toy_data, *GMM_K_MIN_MAX,
-            MODELS_DIR, verbose=False, d=toy_data.shape[1])
+# print('\nPart 1.2: GMM for k = 1, 2, 3, 4, 5')
+#
+# GMM_K_MIN_MAX = (1, 5)
+# utils.fit_k(p3.GMM, toy_data, *GMM_K_MIN_MAX,
+#             MODELS_DIR, verbose=False, d=toy_data.shape[1])
 
 # -------------------------------------------------------------------------------
 # Part 1.3
 # -------------------------------------------------------------------------------
 
+# print('\nPart 1.3: GMM test')
 # utils.test_em_gmm(toy_data)
 
 # -------------------------------------------------------------------------------
 # Part 1.4
 # -------------------------------------------------------------------------------
 
+# print('\nPart 1.4: GMM plot')
 # snaps = glob.glob(os.path.join(MODELS_DIR, 'gmm_*.pkl'))
 # snaps.sort(key=utils.get_k)
 # for snap in snaps:
@@ -66,6 +68,8 @@ utils.fit_k(p3.GMM, toy_data, *GMM_K_MIN_MAX,
 # -------------------------------------------------------------------------------
 # Part 2.4
 # -------------------------------------------------------------------------------
+
+print(utils.load_categories('categories.txt').keys())
 
 # utils.test_em_cmm()
 

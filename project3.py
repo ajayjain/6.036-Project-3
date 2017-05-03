@@ -2,6 +2,8 @@ import random
 import time
 
 import numpy as np
+from scipy.stats import multivariate_normal
+
 from utils import plot_kmeans_clusters
 
 
@@ -163,29 +165,62 @@ class GMM(MixtureModel):
 
         n, d = data.shape
 
+        # TODO: use scipy.stats.{norm, multivariate_normal} for this
         # Compute N(x; mu, sig^2*I) for all data pt, class pairs
         PDFs = np.zeros((n, self.k))
         for j in range(self.k):
             sigsq = self.params['sigsq'][j]
             mu = self.params['mu'][j]
 
-            coeff = 1 / np.sqrt(2 * np.pi * sigsq)
+            # coeff = 1 / np.sqrt(2 * np.pi * sigsq)
 
-            # Compute |x^(i) - mu^(j)| for all i
-            mean_displacements = data - mu # n by d
-            mean_dists_sq = np.inner(mean_displacements, mean_displacements).diagonal() # 1 by n
+            dist = multivariate_normal(mean=mu, cov=np.diag([sigsq] * d))
+            for i in range(n):
+                PDFs[i, j] = dist.pdf(data[i])
 
-            PDFs[:, j] = coeff * np.exp(-mean_dists_sq / (2 * sigsq))
+            # Compute |x^(i) - mu^(j)|^2 for all i
+            # mean_displacements = data - mu # n by d
+            # mean_dists_sq = np.inner(mean_displacements, mean_displacements).diagonal() # 1 by n
+            #
+            # PDFs[:, j] = coeff * np.exp(-mean_dists_sq / (2 * sigsq))
 
         # Compute pi*N(x; mu, sig^2*I)
         weighted_PDFs = self.params['pi'] * PDFs # n by k
 
-        # normalize class probabilites for each data point (so sum_j p(i, j) = 1 for all i)
-        p = weighted_PDFs / np.vstack([weighted_PDFs.sum(axis=1)]*self.k).T
-        return p
+        # normalize cluster probabilites for each data point (so sum_j p(i, j) = 1 for all i)
+        gmm_prob_data = weighted_PDFs.sum(axis=1)
+        p = (weighted_PDFs.T / gmm_prob_data).T
 
-    def m_step(self, data, pz_x):
-        raise NotImplementedError()
+        # Compute expected log-likelihood
+        ll = np.log(gmm_prob_data).sum()
+
+        return (ll, p)
+
+    def m_step(self, data, p_z):
+        """ Performs the M-step of the EM algorithm
+        data - an NxD pandas DataFrame
+        p_z - an NxK numpy ndarray containing posterior probabilities
+
+        returns a dictionary containing the new parameter values
+        """
+        # print(data.shape, p_z.shape)
+        n, d = data.shape
+
+        # Update estimated underlying proportions of data from each cluster
+        cluster_n = p_z.sum(axis=0)
+        new_pi = cluster_n / n
+
+        # Update cluster means to maximize log-likelihood given fixed posterior probabilities
+        new_mu = np.zeros((self.k, d))
+        for j in range(self.k):
+            new_mu[j] = (p_z[:, j] * data.T).T.sum(axis=0) / cluster_n[j]
+
+        # Update cluster variances to maximize log-likelihood given fixed posterior probabilities
+        mean_dists_sq = np.zeros((n, self.k))
+        for j in range(self.k):
+            mean_displacements = data - new_mu[j] # n by d
+            mean_dists_sq[:, j] = np.inner(mean_displacements, mean_displacements).diagonal() # set cluster's column
+        new_sigsq = (p_z * mean_dists_sq).sum(axis=0) / (2*cluster_n)
 
         return {
             'pi': new_pi,
