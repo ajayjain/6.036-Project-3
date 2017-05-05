@@ -69,19 +69,20 @@ if not os.path.exists(MODELS_DIR):
 # Part 2.4
 # -------------------------------------------------------------------------------
 
-print(utils.load_categories('categories.txt').keys())
+# print(utils.load_categories('categories.txt').keys())
 
-# utils.test_em_cmm()
+utils.test_em_cmm()
 
 # -------------------------------------------------------------------------------
 # Part 2.5
 # -------------------------------------------------------------------------------
 
 # field_cats = utils.load_categories(os.path.join(PROJ_DIR, 'categories.txt'))
-# data = pd.read_csv(os.path.join(PROJ_DIR, 'census_data.csv.gz'))
+# # data = pd.read_csv(os.path.join(PROJ_DIR, 'census_data.csv.gz'))
+# data = pd.read_csv(os.path.join(PROJ_DIR, 'tiny_data.csv'))
 # ds = data.apply(pd.Series.nunique)
 #
-# CMM_K_MIN_MAX = (2, 20)
+# CMM_K_MIN_MAX = (2, 2)
 # utils.fit_k(p3.CMM, data, *CMM_K_MIN_MAX, MODELS_DIR, verbose=False, ds=ds)
 
 # -------------------------------------------------------------------------------

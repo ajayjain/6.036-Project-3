@@ -2,6 +2,7 @@ import random
 import time
 
 import numpy as np
+import pandas as pd
 from scipy.stats import multivariate_normal
 
 from utils import plot_kmeans_clusters
@@ -235,12 +236,53 @@ class GMM(MixtureModel):
 
 class CMM(MixtureModel):
     def __init__(self, k, ds):
-        """d is a list containing the number of categories for each feature"""
+        """
+
+        Args:
+            k (int): the number of multi-nomial clusters/mixtures
+            ds (list): the number of categories for each feature
+        """
         super(CMM, self).__init__(k)
+        # print('ds', len(ds), 'k', k, 'ds', ds)
+        # alpha is: feature (D) BY cluster (K) BY category in the feature (d of ds)
         self.params['alpha'] = [np.random.dirichlet([1]*d, size=k) for d in ds]
 
     def e_step(self, data):
-        raise NotImplementedError()
+        """ Performs the E-step of the EM algorithm
+        data - an NxD pandas DataFrame (number of individuals by number of categorical features)
+
+        returns a tuple containing
+            (float) the expected log-likelihood
+            (NxK ndarray) the posterior probability of the latent variable (categories)
+        """
+        N, D = data.shape
+        K = self.k
+
+        pi = self.params['pi'] # K by 1
+        alpha = self.params['alpha']
+
+        # calculate p(x^i | alpha_j) for cluster j in {1,...,K}
+        data_posterior = np.ones((N, K)) # p(x^i | alpha_j), probability of observing a datapt
+                                         # given alpha and which cluster it came from
+
+        for feature, feature_alpha in enumerate(alpha):
+            data_feature = pd.get_dummies(data.iloc[:, feature])
+            data_posterior_feature = np.dot(data_feature, feature_alpha.T)  # p(x_d^i | alpha_j) for j in {1,...,K}
+            data_posterior_feature[data_posterior_feature == 0] = 1
+            data_posterior *= data_posterior_feature
+
+        # calculate pi_j * p(x^i | alpha_j) for cluster j in {1...K}
+        weighted_data_posterior = pi * data_posterior
+
+        data_prob_across_clusters = weighted_data_posterior.sum(axis=1) # p(x^i | alpha), not knowing cluster
+
+        category_posterior = (weighted_data_posterior.T / data_prob_across_clusters).T # N by K
+
+        # compute expected log likelihood
+        ll = (category_posterior * np.log(weighted_data_posterior)).sum()
+
+        return (ll, category_posterior)
+
 
     def m_step(self, data, p_z):
         raise NotImplementedError()
